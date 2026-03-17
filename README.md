@@ -13,9 +13,9 @@ Un assistant SysAdmin basé sur l'IA (LLM) qui tourne 100% en local. Fini l'envo
 
 ##  Utilisation
 ```bash
-git clone [https://github.com/FilouCosmos/aiops-local-log-whisperer.git](https://github.com/FilouCosmos/aiops-local-log-whisperer.git)
+git clone https://github.com/FilouCosmos/aiops-local-log-whisperer.git
 cd aiops-local-log-whisperer
 pip install -r requirements.txt
-
+````
 # Analysez une erreur directement depuis votre terminal :
 python3 log_whisperer.py "nginx: [emerg] bind() to 192.168.1.50:80 failed (98: Address already in use)"
