@@ -1,53 +1,44 @@
 import re
 import sys
 import requests
-import json
 
-# --- Configuration ---
-OLLAMA_API = "http://localhost:11434/api/generate"
-MODELE_IA = "llama3" # Assure-toi d'avoir pull ce modèle via Ollama
+# --- Config ---
+OLLAMA_URL = "http://localhost:11434/api/generate"
+MODEL = "llama3"
 # ---------------------
 
-def anonymiser_log(ligne_log: str) -> str:
-    """Masque les adresses IP pour éviter la fuite de données sensibles."""
-    # Regex pour IPv4
-    ligne_propre = re.sub(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', '[IP_REDACTED]', ligne_log)
-    # On pourrait ajouter d'autres Regex ici pour les emails, MAC, etc.
-    return ligne_propre
+def mask_pii(log_line):
+    # Censure basique d'IPv4 pour eviter les fuites de donnees internes
+    return re.sub(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', '[REDACTED_IP]', log_line)
 
-def analyser_erreur(log_anonymise: str) -> str:
-    """Envoie le log à l'IA locale pour obtenir un diagnostic."""
-    prompt = (
-        f"Tu es un expert SysAdmin Linux (SRE). "
-        f"Analyse ce message d'erreur d'un log système. "
-        f"Donne-moi la cause probable en une phrase, puis la commande Linux pour réparer. "
-        f"Erreur : {log_anonymise}"
-    )
+def ask_ai(log_line):
+    prompt = f"Act as a Senior Linux SysAdmin. Explain this log error in 1 sentence and give the bash command to fix it. Log: {log_line}"
     
     try:
-        reponse = requests.post(
-            OLLAMA_API, 
-            json={"model": MODELE_IA, "prompt": prompt, "stream": False},
-            timeout=30
+        res = requests.post(
+            OLLAMA_URL, 
+            json={"model": MODEL, "prompt": prompt, "stream": False},
+            timeout=20
         )
-        reponse.raise_for_status()
-        return reponse.json().get('response', 'Aucune réponse générée.')
-    except requests.exceptions.RequestException as e:
-        return f"Erreur de communication avec Ollama locale : {e}"
+        res.raise_for_status()
+        return res.json().get('response', 'No answer from AI.')
+    except Exception as e:
+        return f"Local Ollama connection failed: {e}"
 
 if __name__ == "__main__":
+    # Check si l'utilisateur a bien passe un log en argument
     if len(sys.argv) < 2:
-        print("Usage: python3 log_whisperer.py \"<ta ligne de log ici>\"")
+        print("Usage: python3 log_whisperer.py '<your_log_line>'")
         sys.exit(1)
         
-    log_brut = sys.argv[1]
-    print(" Anonymisation des données...")
-    log_propre = anonymiser_log(log_brut)
-    print(f"Log à envoyer : {log_propre}\n")
+    raw_log = sys.argv[1]
+    safe_log = mask_pii(raw_log)
     
-    print(" Analyse par l'IA locale en cours...")
-    diagnostic = analyser_erreur(log_propre)
+    print(f"[INFO] Analyzing log: {safe_log}")
+    print("[INFO] Interrogating local LLM...")
     
-    print("\n--- DIAGNOSTIC SRE ---")
-    print(diagnostic)
-    print("----------------------")
+    remediation = ask_ai(safe_log)
+    
+    print("\n=== AI SRE DIAGNOSTIC ===")
+    print(remediation)
+    print("=========================")
