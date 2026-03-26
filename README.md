@@ -4,7 +4,7 @@ Fini d'envoyer les logs de production sensibles ou les adresses IP internes vers
 
 Il intercepte une ligne de log, censure rudimentairement les données sensibles (PII/IP) via Regex, et interroge une instance locale d'Ollama (LLM) pour fournir instantanément un diagnostic et une commande Bash de remédiation.
 
-## 🏗️ Architecture "Privacy-First"
+##  Architecture "Privacy-First"
 
 ```mermaid
 sequenceDiagram
